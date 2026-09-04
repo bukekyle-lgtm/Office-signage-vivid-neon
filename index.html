@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>總務處公告螢幕 General Affairs Notice Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0812;
+    --panel:#17232F;
+    --panel-2:#1E2E3C;
+    --hairline:#2E2348;
+    --text:#F3EEFF;
+    --muted:#A99BD1;
+    --amber:#FF2FD1;
+    --amber-dim:#2A0A22;
+    --teal:#00E5FF;
+    --teal-dim:#031F26;
+    --indigo:#B537F2;
+    --indigo-dim:#1D0A2E;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;
+    background:#000;
+    overflow:hidden;
+  }
+  body{
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *, .screen{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  .screen{
+    width:100vw;height:100vh;
+    background:
+      radial-gradient(58% 65% at 50% 56%, rgba(var(--glow),0.11) 0%, transparent 62%),
+      radial-gradient(120% 140% at 85% -10%, #170D2A 0%, transparent 55%),
+      var(--ink);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    isolation:isolate;
+    --glow:0,229,255;
+    box-shadow:inset 0 0 0 0.25vmin rgba(var(--glow),0.5), inset 0 0 5vmin rgba(var(--glow),0.14);
+    animation: screenGlow 3s ease-in-out infinite;
+  }
+  .screen[data-accent="amber"]{ --glow:255,47,209; }
+  .screen[data-accent="teal"]{ --glow:0,229,255; }
+  .screen[data-accent="indigo"]{ --glow:181,55,242; }
+  @keyframes screenGlow{
+    0%,100%{ box-shadow:inset 0 0 0 0.2vmin rgba(var(--glow),0.4), inset 0 0 4vmin rgba(var(--glow),0.11); }
+    50%{ box-shadow:inset 0 0 0 0.3vmin rgba(var(--glow),0.65), inset 0 0 6.5vmin rgba(var(--glow),0.22); }
+  }
+
+  /* flowing border light: a bright segment chases around the screen edge */
+  .frame-light{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:6;
+  }
+  .frame-light rect{
+    fill:none;
+    stroke:rgb(var(--glow));
+    stroke-width:3;
+    vector-effect:non-scaling-stroke;
+    stroke-linecap:round;
+    stroke-dasharray:10 90;
+    stroke-dashoffset:0;
+    filter:drop-shadow(0 0 0.6vmin rgb(var(--glow))) drop-shadow(0 0 1.4vmin rgba(var(--glow),0.6));
+    animation: frameChase 6s linear infinite;
+    opacity:0.9;
+  }
+  @keyframes frameChase{
+    to{ stroke-dashoffset:-100; }
+  }
+  .screen::after{
+    /* subtle top-to-bottom vignette for screen depth */
+    content:"";
+    position:absolute; inset:0;
+    box-shadow:inset 0 0 6vmin rgba(0,0,0,0.35);
+    pointer-events:none;
+    z-index:5;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:2.6vmin 3.2vw 1.6vmin 3.2vw;
+    border-bottom:0.14vmin solid var(--hairline);
+    flex-shrink:0;
+  }
+  .org{display:flex; flex-direction:column; gap:0.3vmin;}
+  .org-zh{
+    font-family:'Noto Sans TC',sans-serif;
+    font-weight:700;
+    font-size:2.9vmin;
+    letter-spacing:0.04em;
+  }
+  .org-en{
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:1.35vmin;
+    letter-spacing:0.22em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  .clock{
+    display:flex;
+    align-items:baseline;
+    gap:1.4vw;
+  }
+  .clock .date{
+    font-family:'Noto Sans TC',sans-serif;
+    font-size:1.55vmin;
+    color:var(--muted);
+    font-weight:500;
+    white-space:nowrap;
+  }
+  .clock .time{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:3.1vmin;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0.03em;
+  }
+  .clock .time span.sec{
+    color:var(--muted);
+    font-weight:500;
+    font-size:0.7em;
+  }
+
+  /* ---------- Stage ---------- */
+  .stage{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1.5vmin 4vw;
+    position:relative;
+    overflow:hidden;
+  }
+  .card{
+    width:100%;
+    max-width:100%;
+    display:flex;
+    align-items:center;
+    gap:3.4vw;
+    opacity:0;
+    transform:translateY(1.2vmin);
+    animation:cardIn 0.6s ease forwards;
+  }
+  @keyframes cardIn{
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .icon-wrap{
+    flex-shrink:0;
+    width:12vmin;height:12vmin;
+    border-radius:1.4vmin;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .icon-wrap::before{
+    content:"";
+    position:absolute;
+    top:6%; left:10%;
+    width:42%; height:34%;
+    background:radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.5), rgba(255,255,255,0) 72%);
+    border-radius:50%;
+    pointer-events:none;
+  }
+  .icon-wrap svg{width:6.4vmin;height:6.4vmin;}
+
+  .body-copy{
+    display:flex;
+    flex-direction:column;
+    gap:0.9vmin;
+    min-width:0;
+  }
+  .category{
+    display:flex;
+    align-items:center;
+    gap:0.8vw;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:1.5vmin;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+  }
+  .category .zh{
+    font-family:'Noto Sans TC',sans-serif;
+    letter-spacing:0.08em;
+    font-size:1.7vmin;
+  }
+  .category .divider{opacity:0.4;}
+
+  .headline-zh{
+    font-family:'Noto Sans TC',sans-serif;
+    font-weight:700;
+    font-size:5vmin;
+    line-height:1.22;
+    letter-spacing:0.01em;
+    white-space:pre-line;
+  }
+  /* stacked EN / VI translation rows, each tagged with a small language chip */
+  .translations{display:flex;flex-direction:column;gap:0.6vmin;margin-top:0.3vmin;}
+  .lang-row{display:flex;align-items:baseline;gap:1vw;}
+  .lang-tag{
+    flex-shrink:0;
+    font-family:'Inter',sans-serif;
+    font-size:1.05vmin;
+    font-weight:700;
+    letter-spacing:0.06em;
+    color:var(--muted);
+    border:0.1vmin solid var(--hairline);
+    border-radius:0.5vmin;
+    padding:0.15vmin 0.7vw;
+    line-height:1.5;
+  }
+  .lang-text{
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:2.9vmin;
+    line-height:1.32;
+    color:var(--muted);
+    white-space:pre-line;
+  }
+  .note{
+    margin-top:0.6vmin;
+    display:flex;
+    align-items:flex-start;
+    gap:0.7vw;
+    padding-top:1vmin;
+    border-top:0.12vmin solid var(--hairline);
+  }
+  .note svg{width:2.4vmin;height:2.4vmin;flex-shrink:0;margin-top:0.2vmin;}
+  .note-text{display:flex;flex-direction:column;gap:0.5vmin;}
+  .note-zh{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:1.9vmin;}
+
+  /* accent variants */
+  .accent-amber .icon-wrap{background:var(--amber-dim); color:var(--amber); box-shadow:0 0 1vmin rgba(255,47,209,0.55), inset 0 0 0.4vmin rgba(255,47,209,0.3);}
+  .accent-amber .category{color:var(--amber); text-shadow:0 0 0.5vmin rgba(255,47,209,0.5);}
+  .accent-teal .icon-wrap{background:var(--teal-dim); color:var(--teal); box-shadow:0 0 1vmin rgba(0,229,255,0.55), inset 0 0 0.4vmin rgba(0,229,255,0.3);}
+  .accent-teal .category{color:var(--teal); text-shadow:0 0 0.5vmin rgba(0,229,255,0.5);}
+  .accent-indigo .icon-wrap{background:var(--indigo-dim); color:var(--indigo); box-shadow:0 0 1vmin rgba(181,55,242,0.55), inset 0 0 0.4vmin rgba(181,55,242,0.3);}
+  .accent-indigo .category{color:var(--indigo); text-shadow:0 0 0.5vmin rgba(181,55,242,0.5);}
+
+  .accent-amber .headline-zh{
+    color:#fff;
+    text-shadow:0 0 0.08vmin #fff, 0 0 0.22vmin rgba(255,255,255,0.8), 0 0 0.5vmin rgba(255,150,235,0.5), 0 0 0.9vmin rgba(255,47,209,0.5);
+  }
+  .accent-teal .headline-zh{
+    color:#fff;
+    text-shadow:0 0 0.08vmin #fff, 0 0 0.22vmin rgba(255,255,255,0.8), 0 0 0.5vmin rgba(170,240,255,0.5), 0 0 0.9vmin rgba(0,229,255,0.5);
+  }
+  .accent-indigo .headline-zh{
+    color:#fff;
+    text-shadow:0 0 0.08vmin #fff, 0 0 0.22vmin rgba(255,255,255,0.8), 0 0 0.5vmin rgba(215,180,250,0.5), 0 0 0.9vmin rgba(181,55,242,0.5);
+  }
+
+  /* Light-wave across the headline: each character flashes brighter + shifts toward the
+     accent tint, staggered by a small delay per character (set inline via --d). Pure
+     color/filter/transform keyframes + animation-delay — no advanced/edge-case CSS features. */
+  .wave-char{
+    display:inline-block;
+    animation-duration:7s;
+    animation-timing-function:ease-in-out;
+    animation-iteration-count:infinite;
+    animation-delay:var(--d,0s);
+  }
+  .accent-amber .wave-char{ animation-name:waveCharAmber; }
+  .accent-teal  .wave-char{ animation-name:waveCharTeal; }
+  .accent-indigo .wave-char{ animation-name:waveCharIndigo; }
+
+  @keyframes waveCharAmber{
+    0%,10%,100%{ color:#fff; filter:brightness(1); transform:scale(1); }
+    4%,6%{ color:#ffb0ec; filter:brightness(2.1); transform:scale(1.15); }
+  }
+  @keyframes waveCharTeal{
+    0%,10%,100%{ color:#fff; filter:brightness(1); transform:scale(1); }
+    4%,6%{ color:#9beeff; filter:brightness(2.1); transform:scale(1.15); }
+  }
+  @keyframes waveCharIndigo{
+    0%,10%,100%{ color:#fff; filter:brightness(1); transform:scale(1); }
+    4%,6%{ color:#dcb8ff; filter:brightness(2.1); transform:scale(1.15); }
+  }
+
+  /* Same relay wave, applied per WORD (not per letter) to the EN/VI translation lines —
+     word-level keeps natural line-wrapping intact for Latin scripts, and rests at each
+     language's own tinted colour instead of white. */
+  .accent-amber .lang-text .wave-char{ animation-name:waveWordAmber; }
+  .accent-teal  .lang-text .wave-char{ animation-name:waveWordTeal; }
+  .accent-indigo .lang-text .wave-char{ animation-name:waveWordIndigo; }
+
+  @keyframes waveWordAmber{
+    0%,10%,100%{ color:#FFD3F4; filter:brightness(1); }
+    4%,6%{ color:#fff; filter:brightness(1.7); }
+  }
+  @keyframes waveWordTeal{
+    0%,10%,100%{ color:#C7F7FF; filter:brightness(1); }
+    4%,6%{ color:#fff; filter:brightness(1.7); }
+  }
+  @keyframes waveWordIndigo{
+    0%,10%,100%{ color:#E7CBFF; filter:brightness(1); }
+    4%,6%{ color:#fff; filter:brightness(1.7); }
+  }
+
+  /* Same relay wave applied to the fork/knife icon's three strokes (fork bracket, fork
+     stem, knife) — always amber since the lunch card is the only place this icon renders. */
+  .wave-icon-part{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:waveIconAmber 7s ease-in-out infinite;
+    animation-delay:var(--d,0s);
+  }
+  @keyframes waveIconAmber{
+    0%,10%,100%{ color:#FF2FD1; filter:brightness(1); transform:scale(1); }
+    4%,6%{ color:#fff; filter:brightness(1.6); transform:scale(1.12); }
+  }
+
+  .accent-amber .lang-text{color:#FFD3F4; text-shadow:0 0 0.3vmin rgba(255,47,209,0.4);}
+  .accent-teal  .lang-text{color:#C7F7FF; text-shadow:0 0 0.3vmin rgba(0,229,255,0.4);}
+  .accent-indigo .lang-text{color:#E7CBFF; text-shadow:0 0 0.3vmin rgba(181,55,242,0.4);}
+
+  .accent-amber .lang-tag{border-color:rgba(255,47,209,0.45); box-shadow:0 0 0.35vmin rgba(255,47,209,0.25);}
+  .accent-teal  .lang-tag{border-color:rgba(0,229,255,0.45); box-shadow:0 0 0.35vmin rgba(0,229,255,0.25);}
+  .accent-indigo .lang-tag{border-color:rgba(181,55,242,0.45); box-shadow:0 0 0.35vmin rgba(181,55,242,0.25);}
+
+  /* lunch progress ring */
+  .ring-wrap{position:relative; width:12vmin; height:12vmin;}
+  .ring-wrap svg.ring{position:absolute; inset:0; transform:rotate(-90deg);}
+  .ring-bg{fill:none; stroke:var(--amber-dim); stroke-width:6;}
+  .ring-fg{fill:none; stroke:var(--amber); stroke-width:6; stroke-linecap:round;
+    transition:stroke-dashoffset 1s linear; filter:drop-shadow(0 0 0.12vmin #fff) drop-shadow(0 0 0.4vmin rgba(255,47,209,0.7));}
+  .ring-icon{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;}
+  .ring-icon svg{width:5vmin;height:5vmin; color:var(--amber);}
+
+  /* ---------- Footer ---------- */
+  .statusbar{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:1.4vmin 3.2vw 2.2vmin 3.2vw;
+    border-top:0.14vmin solid var(--hairline);
+  }
+  .dots{display:flex; gap:0.9vmin;}
+  .dot{
+    width:1.05vmin;height:1.05vmin;border-radius:50%;
+    background:var(--hairline);
+    transition:background 0.4s ease, transform 0.4s ease;
+  }
+  .dot.active{background:var(--text); transform:scale(1.25);}
+  .dot.lunch-only{background:var(--amber);}
+
+  .meta{
+    font-family:'Inter',sans-serif;
+    font-size:1.5vmin;
+    color:var(--muted);
+    letter-spacing:0.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  .meta b{color:var(--text); font-weight:600;}
+
+  .progress-track{
+    position:absolute;
+    left:0; bottom:0;
+    height:0.35vmin;
+    width:100%;
+    background:var(--hairline);
+    z-index:4;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--amber);
+    width:0%;
+    transition:width 1s linear;
+  }
+
+  /* ---------- Responsive layout for tall/narrow panels ---------- */
+  @media (max-aspect-ratio: 3/4){
+    .topbar{ flex-wrap:wrap; justify-content:center; text-align:center; row-gap:1vmin; }
+    .org{ align-items:center; }
+    .clock{ justify-content:center; }
+    .card{ flex-direction:column; text-align:center; gap:2.2vmin; }
+    .body-copy{ align-items:center; }
+    .category{ justify-content:center; }
+    .note{ flex-direction:column; align-items:center; text-align:center; }
+    .note-text{ align-items:center; }
+    .lang-row{ justify-content:center; }
+    .statusbar{ flex-direction:column; align-items:center; gap:1vmin; text-align:center; }
+  }
+</style>
+</head>
+<body>
+<div class="screen" id="screenRoot">
+
+  <svg class="frame-light" viewBox="0 0 180 100" preserveAspectRatio="none" aria-hidden="true">
+    <rect x="0.6" y="0.6" width="178.8" height="98.8" pathLength="100"></rect>
+  </svg>
+
+  <header class="topbar">
+    <div class="org">
+      <span class="org-zh">總務處　辦公室公告</span>
+      <span class="org-en">General Affairs Office — Notice Board</span>
+    </div>
+    <div class="clock">
+      <span class="date" id="dateLabel">— — —</span>
+      <span class="time" id="timeLabel">--:--<span class="sec">--</span></span>
+    </div>
+  </header>
+
+  <main class="stage" id="stage"></main>
+
+  <footer class="statusbar">
+    <div class="dots" id="dots"></div>
+    <div class="meta" id="meta">載入中…</div>
+  </footer>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  /* ---------- Icons ---------- */
+  const ICON_FORK_KNIFE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path class="wave-icon-part" style="--d:0s" d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path class="wave-icon-part" style="--d:0.15s" d="M7 2v20"/><path class="wave-icon-part" style="--d:0.3s" d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`;
+  const ICON_MAIL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`;
+  const ICON_CAL = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`;
+  const ICON_KNOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="4" r="2"/><path d="M6 6v6"/><path d="M6 8l-3 3"/><path d="M6 8l4 1.5"/><path d="M6 12l-2 6"/><path d="M6 12l2 6"/><path d="M17 2v20"/><path d="M12.5 7l1-1.2M12.8 9.3h1.4M12.5 11.5l1 1.2"/><circle cx="16" cy="12.5" r="0.5" fill="currentColor" stroke="none"/></svg>`;
+
+  /* ---------- Content model ---------- */
+  const LUNCH = {
+    key:'lunch', accent:'amber', icon: ICON_FORK_KNIFE,
+    catZh:'午休提醒', catEn:'LUNCH BREAK',
+    zh:'午休時間\n12:00－13:00',
+    translations:[
+      {tag:'EN', text:'Lunch Break\n12:00 PM – 1:00 PM'},
+      {tag:'VI', text:'Giờ nghỉ trưa\n12:00 – 13:00'}
+    ],
+    noteIcon: ICON_KNOCK,
+    noteZh:'郵差請自行敲門入內洽公'
+  };
+
+  const ROTATION = [
+    {
+      key:'mail', accent:'teal', icon: ICON_MAIL,
+      catZh:'郵件領取', catEn:'MAIL PICKUP',
+      zh:'領取郵件時間',
+      zhDetail:'每週學校上班日　上午 11:00－下午 16:00',
+      translations:[
+        {tag:'EN', text:'Mail Pickup Hours\nSchool business days · 11:00 AM – 4:00 PM'},
+        {tag:'VI', text:'Giờ nhận thư\nCác ngày làm việc trong tuần · 11:00 – 16:00'}
+      ]
+    },
+    {
+      key:'break', accent:'indigo', icon: ICON_CAL,
+      catZh:'假期上班時間', catEn:'RECESS HOURS',
+      zh:'寒暑假上班時間',
+      zhDetail:'6/29-9/4\n每週一至週四　9:00－16:00',
+      translations:[
+        {tag:'EN', text:'Summer / Winter Recess Hours\nJun 29 – Sep 4, 2026 (ROC 115) · Mon–Thu, 9:00 AM–4:00 PM'},
+        {tag:'VI', text:'Giờ làm việc kỳ nghỉ hè / đông\n29/6 – 4/9/2026 · Thứ Hai – Thứ Năm, 9:00 – 16:00'}
+      ]
+    }
+  ];
+
+  const ROTATE_MS = 45 * 1000; // 45 seconds
+
+  // ---- TESTING SWITCH ----
+  // Set to true to preview the lunch screen right now, regardless of the clock.
+  // Set back to false before leaving this running on the door screen.
+  const DEBUG_FORCE_LUNCH = false;
+  const stage = document.getElementById('stage');
+  const dotsEl = document.getElementById('dots');
+  const metaEl = document.getElementById('meta');
+  const timeLabel = document.getElementById('timeLabel');
+  const dateLabel = document.getElementById('dateLabel');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+
+  let currentKey = null;
+
+  const WEEKDAY_ZH = {Mon:'一',Tue:'二',Wed:'三',Thu:'四',Fri:'五',Sat:'六',Sun:'日'};
+
+  function getTaipeiParts(){
+    const fmt = new Intl.DateTimeFormat('en-US',{
+      timeZone:'Asia/Taipei', hour12:false,
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', weekday:'short'
+    });
+    const parts = fmt.formatToParts(new Date());
+    const o = {};
+    parts.forEach(p => o[p.type] = p.value);
+    o.hour = parseInt(o.hour,10);
+    o.minute = parseInt(o.minute,10);
+    o.second = parseInt(o.second,10);
+    return o;
+  }
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function renderDots(count, activeIndex, isLunch){
+    dotsEl.innerHTML = '';
+    if (isLunch){
+      const d = document.createElement('div');
+      d.className = 'dot lunch-only';
+      dotsEl.appendChild(d);
+      return;
+    }
+    for (let i=0;i<count;i++){
+      const d = document.createElement('div');
+      d.className = 'dot' + (i===activeIndex ? ' active' : '');
+      dotsEl.appendChild(d);
+    }
+  }
+
+  function waveText(str, stepDelay){
+    stepDelay = stepDelay || 0.06;
+    let idx = 0;
+    return str.split('\n').map(function(line){
+      return line.split('').map(function(ch){
+        const delay = (idx++ * stepDelay).toFixed(2);
+        return '<span class="wave-char" style="--d:' + delay + 's">' + ch + '</span>';
+      }).join('');
+    }).join('<br>');
+  }
+
+  function waveWords(str, stepDelay){
+    stepDelay = stepDelay || 0.15;
+    let idx = 0;
+    return str.split('\n').map(function(line){
+      return line.split(/(\s+)/).map(function(token){
+        if (token === '' || /^\s+$/.test(token)) return token; // keep spaces as plain text so wrapping still works
+        const delay = (idx++ * stepDelay).toFixed(2);
+        return '<span class="wave-char" style="--d:' + delay + 's">' + token + '</span>';
+      }).join('');
+    }).join('<br>');
+  }
+
+  function translationRows(translations){
+    return translations.map(t =>
+      `<div class="lang-row"><span class="lang-tag">${t.tag}</span><span class="lang-text">${waveWords(t.text)}</span></div>`
+    ).join('');
+  }
+
+  function renderLunchCard(){
+    document.getElementById('screenRoot').setAttribute('data-accent', LUNCH.accent);
+    stage.innerHTML = `
+      <div class="card accent-amber">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="ring-icon">${LUNCH.icon}</div>
+        </div>
+        <div class="body-copy">
+          <div class="category"><span class="zh">${LUNCH.catZh}</span><span class="divider">/</span><span>${LUNCH.catEn}</span></div>
+          <div class="headline-zh">${waveText(LUNCH.zh)}</div>
+          <div class="translations">${translationRows(LUNCH.translations)}</div>
+          <div class="note">
+            ${LUNCH.noteIcon}
+            <div class="note-text">
+              <div class="note-zh">${LUNCH.noteZh}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRotationCard(item){
+    document.getElementById('screenRoot').setAttribute('data-accent', item.accent);
+    stage.innerHTML = `
+      <div class="card accent-${item.accent}">
+        <div class="icon-wrap">${item.icon}</div>
+        <div class="body-copy">
+          <div class="category"><span class="zh">${item.catZh}</span><span class="divider">/</span><span>${item.catEn}</span></div>
+          <div class="headline-zh">${waveText(item.zh + (item.zhDetail ? '\n' + item.zhDetail : ''))}</div>
+          <div class="translations">${translationRows(item.translations)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function tick(){
+    const t = getTaipeiParts();
+
+    // Header clock (Taipei local time, authoritative regardless of device timezone)
+    dateLabel.textContent = `${t.year}/${pad(+t.month)}/${pad(+t.day)}（週${WEEKDAY_ZH[t.weekday] || t.weekday}）`;
+    timeLabel.innerHTML = `${pad(t.hour)}:${pad(t.minute)}<span class="sec">:${pad(t.second)}</span>`;
+
+    const isLunch = DEBUG_FORCE_LUNCH || (t.hour === 12); // 12:00:00 - 12:59:59
+
+    if (isLunch){
+      if (currentKey !== 'lunch'){
+        renderLunchCard();
+        currentKey = 'lunch';
+      }
+      const elapsed = t.minute * 60 + t.second;      // seconds into lunch
+      const remaining = 3600 - elapsed;
+      const circumference = 263.9;
+      const offset = circumference * (1 - elapsed/3600);
+      const ringFg = document.getElementById('ringFg');
+      if (ringFg) ringFg.style.strokeDashoffset = offset.toFixed(1);
+
+      renderDots(0, 0, true);
+      metaEl.innerHTML = `距離午休結束尚有 <b>${pad(Math.floor(remaining/60))}:${pad(remaining%60)}</b> ・ Reopens in ${pad(Math.floor(remaining/60))}:${pad(remaining%60)}`;
+      progressTrack.style.display = 'block';
+      progressFill.style.width = (elapsed/3600*100).toFixed(2) + '%';
+    } else {
+      const nowMs = Date.now();
+      const idx = Math.floor(nowMs / ROTATE_MS) % ROTATION.length;
+      const item = ROTATION[idx];
+
+      if (currentKey !== item.key){
+        renderRotationCard(item);
+        currentKey = item.key;
+      }
+
+      const msIntoSlot = nowMs % ROTATE_MS;
+      const msRemaining = ROTATE_MS - msIntoSlot;
+      const secRemaining = Math.floor(msRemaining/1000);
+
+      renderDots(ROTATION.length, idx, false);
+      metaEl.innerHTML = `下一則訊息 <b>${pad(Math.floor(secRemaining/60))}:${pad(secRemaining%60)}</b> 後切換 ・ Next notice in ${pad(Math.floor(secRemaining/60))}:${pad(secRemaining%60)}`;
+      progressTrack.style.display = 'none';
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+
+})();
+</script>
+</body>
+</html>
